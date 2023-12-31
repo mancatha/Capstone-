@@ -6,8 +6,8 @@ from sklearn.tree import DecisionTreeClassifier
 
 # key lists
 
-expected_inputs = ['TENURE', 'MONTANT', 'FREQUENCE_RECH', 'REVENUE', ' ARPU_SEGMENT','FREQUENCE', 'DATA_VOLUME', 'ON_NET', 'ORANGE',' TIGO', ' REGULARITY', ' FREQ_TOP_PACK']
-numerics = ['MONTANT', 'FREQUENCE_RECH', 'REVENUE','ARPU_SEGMENT','FREQUENCE','DATA_VOLUME','ON_NET','ORANGE','TIGO','REGULARITY',' FREQ_TOP_PACK']
+expected_inputs = ['TENURE','MONTANT','FREQUENCE_RECH','REVENUE','ARPU_SEGMENT','FREQUENCE','DATA_VOLUME','ON_NET','ORANGE','TIGO','REGULARITY','FREQ_TOP_PACK']
+numerics = ['MONTANT','FREQUENCE_RECH','REVENUE','ARPU_SEGMENT','FREQUENCE','DATA_VOLUME','ON_NET','ORANGE','TIGO','REGULARITY','FREQ_TOP_PACK']
 categoricals = ['TENURE']
 # Load the model and pipeline
 
@@ -33,10 +33,12 @@ encoder = None
 # Function to process inputs and return prediction
 
 
-def predict_customer_attrition(*args, pipeline=dt_pipeline):
+def predict_customer_attrition(*args, pipeline=dt_pipeline,model=model, scaler= scaler, encoder=encoder):
     # Convert inputs into a dataframe
     input_data = pd.DataFrame([args], columns=expected_inputs)
-    
+       # Print the input data
+    print("Input Data:")
+    print(input_data)
 
     # Make the prediction 
     model_output = pipeline.predict(input_data)
