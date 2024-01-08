@@ -1,80 +1,44 @@
-import gradio as gr
-import joblib
+import streamlit as st
 import pandas as pd
-from xgboost import XGBClassifier
-from sklearn.tree import DecisionTreeClassifier
+import requests
 
-# key lists
+# Function to predict churn using FastAPI
+def predict_churn_interface(TENURE, MONTANT, FREQUENCE_RECH, REVENUE, ARPU_SEGMENT, FREQUENCE,
+                             DATA_VOLUME, ON_NET, ORANGE, TIGO, REGULARITY, FREQ_TOP_PACK):
 
-expected_inputs = ['TENURE','MONTANT','FREQUENCE_RECH','REVENUE','ARPU_SEGMENT','FREQUENCE','DATA_VOLUME','ON_NET','ORANGE','TIGO','REGULARITY','FREQ_TOP_PACK']
-numerics = ['MONTANT','FREQUENCE_RECH','REVENUE','ARPU_SEGMENT','FREQUENCE','DATA_VOLUME','ON_NET','ORANGE','TIGO','REGULARITY','FREQ_TOP_PACK']
-categoricals = ['TENURE']
-# Load the model and pipeline
-
-# Define helper functions
-# Function to load the pipeline
-def load_pipeline(file_path="model/dt.joblib"):
-    with open(file_path, "rb") as file:
-        pipeline = joblib.load(file)
-    return pipeline
-
-
-# Import the model
-# Import the model using the load_pipeline function
-model = load_pipeline("model/dt.joblib")
-
-# Instantiate the pipeline
-dt_pipeline= load_pipeline()
-#decision_tree_pipeline = load_pipeline()
-
-scaler = None
-encoder = None
-
-# Function to process inputs and return prediction
-
-
-def predict_customer_attrition(*args, pipeline=dt_pipeline,model=model, scaler= scaler, encoder=encoder):
-    # Convert inputs into a dataframe
-    input_data = pd.DataFrame([args], columns=expected_inputs)
-       # Print the input data
-    print("Input Data:")
-    print(input_data)
-
-    # Make the prediction 
-    model_output = pipeline.predict(input_data)
-
-    if model_output == "Yes":
-        prediction = 1
-    else:
-        prediction = 0
-
-
-    # Return the prediction
-    return {"Prediction: Customer is likely to Churn": prediction,
-            "Prediction: Customer is likely not to Churn": 1 - prediction}
     
-  
-      # Set up interface
-    # Inputs
-
-TENURE= gr.Dropdown(label = "What is the duration of your network?", choices = ['I 18-21 month' ,'K > 24 month', 'G 12-15 month' ,'J 21-24 month','H 15-18 month', 'F 9-12 month' ,'E 6-9 month' ,'D 3-6 month'],value ='I 18-21 month')
-MONTANT= gr.Slider(label= "What is your top-amount?", minimum= 15, maximum= 800, value= 10, interactive= True)
-FREQUENCE_RECH= gr.Slider(label= "What is number of times does you refilled your bundle?", minimum= 5, maximum= 200, value= 10, interactive= True)
-REVENUE = gr.Slider(label="What is your monthly income", minimum = 100,maximum=10000, value=200,interactive=True)
-ARPU_SEGMENT = gr.Slider(label ="What is your income over 90 days / 3",minimum = 1000,maximum=500000,value=1000,interactive=True)
-FREQUENCE= gr.Slider(label= "How do you how often do you use the service ",minimum = 10,maximum=200,value= 5,interactive=True)
-DATA_VOLUME = gr.Slider(label= "How many times do you have connections", minimum =20,maximum = 1000,value= 2,interactive=True)
-ON_NET = gr.Slider(label = "How many time do you do inter expresso call", minimum = 5,maximum= 1000,value=3,interactive=True)
-ORANGE = gr.Slider(label = "How many time do you use orange to make calls(tigo)",minimum=5,maximum =100,value=2,interactive=True)
-TIGO= gr.Slider(label= "How many time do you use tigo networks", minimum=6,maximum=100,value =5,interactive=True)
-REGULARITY= gr.Slider(label= "How many number of times the are you active for 90 days",minimum=5,maximum=100,value=2,interactive=True)
-FREQ_TOP_PACK= gr.Slider(label="How many number of times does you been activated to the top pack packages",minimum=10,maximum=1000,value=5,interactive=True)
-
-# Create the Gradio interface
-gr.Interface(inputs=[TENURE,MONTANT,FREQUENCE_RECH,REVENUE,ARPU_SEGMENT,FREQUENCE,DATA_VOLUME,ON_NET,ORANGE,TIGO,REGULARITY,FREQ_TOP_PACK],
-             fn=predict_customer_attrition,
-             outputs= gr.Label("Awaiting Submission...."),
-             title="Telecommunication Customer Attrition Prediction App",
-             description="This app was created by Santorini during our Project 4 ", live=True).launch(inbrowser=True, show_error=True)
+     # Send data to FastAPI for prediction
+    response = requests.post("http://127.0.0.1:8000/predict_churn", json=input_data)
+    prediction_data = response.json()
+    
+    
+# Extract probability score and churn status from the API response
+    probability_score = prediction_data.get("probability_score", "N/A")
+    churn_status = prediction_data.get("churn_status", "N/A")
 
 
+    # Display prediction result in Streamlit
+    st.write(f"Prediction: {churn_status}\nProbability Score: {probability_score}")
+
+# Set up interface
+# Inputs
+input_data = {
+    "TENURE": st.selectbox("What is the duration of your network?", ['I 18-21 month', 'K > 24 months', 'G 12-15 months',
+                                                                     'J 21-24 months', 'H 15-18 months', 'F 9-12 months',
+                                                                     'E 6-9 months', 'D 3-6 months']),
+    "MONTANT": st.slider("What is your top-amount?", 15, 800, 10),
+    "FREQUENCE_RECH": st.slider("What is the number of times you refilled your bundle?", 5, 200, 10),
+    "REVENUE": st.slider("What is your monthly income", 100, 10000, 200),
+    "ARPU_SEGMENT": st.slider("What is your income over 90 days / 3", 1000, 500000, 1000),
+    "FREQUENCE": st.slider("How often do you use the service", 10, 200, 5),
+    "DATA_VOLUME": st.slider("How many times do you have connections", 20, 1000, 2),
+    "ON_NET": st.slider("How many times do you do inter expresso calls", 5, 1000, 3),
+    "ORANGE": st.slider("How many times do you use orange to make calls (tigo)", 5, 100, 2),
+    "TIGO": st.slider("How many times do you use tigo networks", 6, 100, 5),
+    "REGULARITY": st.slider("How many times are you active for 90 days", 5, 100, 2),
+    "FREQ_TOP_PACK": st.slider("How many times have you been activated to the top pack packages", 10, 1000, 5),
+}
+
+# Call prediction function when a button is clicked
+if st.button("Predict"):
+    predict_churn_interface(**input_data)

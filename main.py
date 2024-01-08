@@ -1,25 +1,16 @@
-from fastapi import FastAPI, Form, Query
+from fastapi import FastAPI, Query
 import joblib
 from pydantic import BaseModel
 import pandas as pd
-import warnings
-from sklearn.exceptions import DataConversionWarning
+from fastapi import HTTPException
 
- # Suppress DataConversionWarning
-warnings.filterwarnings("ignore", category=DataConversionWarning)
-
- 
-pipeline = joblib.load('model/xgb.joblib')
+#pipeline = joblib.load('model/xgb.joblib')
 pipeline_1 = joblib.load('model\dt.joblib')
 
+app = FastAPI(title="Customer Churn Analysis API")
 
-
-app = FastAPI(
-    title="Customer Churn Analysis API"
-)
-
-class SepsisFeatures(BaseModel):
-    TENURE: object
+class ChurnFeatures(BaseModel):
+    TENURE: str
     MONTANT: float
     FREQUENCE_RECH: float
     REVENUE: float
@@ -29,13 +20,17 @@ class SepsisFeatures(BaseModel):
     ON_NET: float
     ORANGE: float
     TIGO: float
-    REGULARITY: int
-    FREQ_TOP_PACK:float
+    REGULARITY: float
+    FREQ_TOP_PACK: float
+
     
+
+# Load your model
+pipeline = joblib.load('model/dt.joblib')
 
     # Define the available models
 models = {
-    "xgb": pipeline,
+    
     "dt": pipeline_1,
     }
 
@@ -48,42 +43,36 @@ def home():
 @app.get('/info')
 def appinfo():
     return 'Customer churn prediction: This is my interface'
- 
- 
-# Define the prediction endpoint
+
 @app.post('/predict_churn')
-#def predict_sepsis(sepsis_features: SepsisFeatures):
-def predict_sepsis(
-    churn_features: SepsisFeatures,
-      selected_model: str = Query("Xgb", description="Select the model for prediction")
+def predict_churn(
+    churn_features: ChurnFeatures,
+    selected_model: str = Query("dt", description="Select the model for prediction")
 ):
-    
     # Convert input features to a DataFrame
     df = pd.DataFrame([churn_features.model_dump()])
-    
-     # Check if the specified model is valid
-    if selected_model not in models:
-        return {"error": "Invalid model specified"}
- 
-   # Perform prediction using the selected pipeline
-    selected_pipeline = models[selected_model]
-    prediction = selected_pipeline.predict(df)
-    #encoder_prediction = encoder.inverse_transform([prediction])[0]
-    
-     # Get the probability scores
+
+    # Check if the specified model is valid
+    if selected_model != "dt":
+        raise HTTPException(status_code=400, detail="Invalid model specified")
+
+    # Perform prediction using the selected pipeline
     try:
-        probabilities = selected_pipeline.predict_proba(df)
-        # Assuming binary classification, use the probability of the positive class
+        selected_pipeline = models[selected_model]
+        probabilities = pipeline.predict_proba(df)
         probability_score = probabilities[0][1]
     except AttributeError:
         probability_score = None
-    # Convert numpy.float32 to regular float
-    probability_score = float(probability_score) if probability_score is not None else None
-
-    return {"model_used": selected_model,"probability_score": probability_score}
+        
     
-   
+    # Interpret prediction based on probability score
+    churn_status = " Customer Churn" if probability_score == 1 else "Customer Not Churn" 
 
+    # Create a dictionary for the response
+    prediction_data = {
+        "selected_model": selected_model,
+        "probability_score": probability_score,
+        "churn_status": churn_status,
+    }
 
-
-
+    return prediction_data
