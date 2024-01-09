@@ -4,41 +4,54 @@ import requests
 
 # Function to predict churn using FastAPI
 def predict_churn_interface(TENURE, MONTANT, FREQUENCE_RECH, REVENUE, ARPU_SEGMENT, FREQUENCE,
-                             DATA_VOLUME, ON_NET, ORANGE, TIGO, REGULARITY, FREQ_TOP_PACK):
+                             DATA_VOLUME, ON_NET, ORANGE, TIGO, REGULARITY, FREQ_TOP_PACK,REGION):
 
-    
-     # Send data to FastAPI for prediction
+    # Send data to FastAPI for prediction
     response = requests.post("http://127.0.0.1:8000/predict_churn", json=input_data)
     prediction_data = response.json()
-    
-    
-# Extract probability score and churn status from the API response
+
+    # Extract probability score and churn status from the API response
     probability_score = prediction_data.get("probability_score", "N/A")
     churn_status = prediction_data.get("churn_status", "N/A")
-
 
     # Display prediction result in Streamlit
     st.write(f"Prediction: {churn_status}\nProbability Score: {probability_score}")
 
 # Set up interface
+# Adding title with color
+st.markdown("<h2 style='color: blue;'>Churn Prediction App</h2>", unsafe_allow_html=True)
+# Adding sidebar with description
+st.sidebar.markdown("## App Description")
+st.sidebar.write("This app predicts churn using the provided input features.")
+st.sidebar.write("Adjust the sliders to input your data and click 'Predict' to get the result.")
+
+
+# Adding columns
+left_column, right_column = st.columns(2)
+
 # Inputs
 input_data = {
-    "TENURE": st.selectbox("What is the duration of your network?", ['I 18-21 month', 'K > 24 months', 'G 12-15 months',
-                                                                     'J 21-24 months', 'H 15-18 months', 'F 9-12 months',
-                                                                     'E 6-9 months', 'D 3-6 months']),
-    "MONTANT": st.slider("What is your top-amount?", 15, 800, 10),
-    "FREQUENCE_RECH": st.slider("What is the number of times you refilled your bundle?", 5, 200, 10),
-    "REVENUE": st.slider("What is your monthly income", 100, 10000, 200),
-    "ARPU_SEGMENT": st.slider("What is your income over 90 days / 3", 1000, 500000, 1000),
-    "FREQUENCE": st.slider("How often do you use the service", 10, 200, 5),
-    "DATA_VOLUME": st.slider("How many times do you have connections", 20, 1000, 2),
-    "ON_NET": st.slider("How many times do you do inter expresso calls", 5, 1000, 3),
-    "ORANGE": st.slider("How many times do you use orange to make calls (tigo)", 5, 100, 2),
-    "TIGO": st.slider("How many times do you use tigo networks", 6, 100, 5),
-    "REGULARITY": st.slider("How many times are you active for 90 days", 5, 100, 2),
-    "FREQ_TOP_PACK": st.slider("How many times have you been activated to the top pack packages", 10, 1000, 5),
+    "TENURE": left_column.selectbox("What is the duration of your network?", ['I 18-21 month', 'K > 24 months', 'G 12-15 months',
+                                                                              'J 21-24 months', 'H 15-18 months', 'F 9-12 months',
+                                                                              'E 6-9 months', 'D 3-6 months']),
+    "REGION": right_column.selectbox("What is Region are you from?",['MATAM', 'DAKAR', 'SAINT-LOUIS', 'TAMBACOUNDA', 'FATICK', 'LOUGA', 'KAFFRINE',
+                                                                    'THIES', 'DIOURBEL', 'KOLDA', 'KAOLACK', 'ZIGUINCHOR', 'SEDHIOU', 'KEDOUGOU']),
+    "MONTANT": left_column.slider("What is your top-amount?", 0, 800, 0),
+    "FREQUENCE_RECH": left_column.slider("What is the number of times you refilled your bundle?", 0, 200, 0),
+    "REVENUE": right_column.slider("What is your monthly income", 0, 10000, 200),
+    "ARPU_SEGMENT": right_column.slider("What is your income over 90 days / 3", 0, 500000, 0),
+    "FREQUENCE": right_column.slider("How often do you use the service", 0, 200, 0),
+    "DATA_VOLUME": right_column.slider("How many times do you have connections", 0, 1000, 0),
+    "ON_NET": left_column.slider("How many times do you do inter expresso calls", 0, 1000, 0),
+    "ORANGE": left_column.slider("How many times do you use orange to make calls (tigo)", 0, 100, 0),
+    "TIGO": right_column.slider("How many times do you use tigo networks", 0, 100, 0),
+    "REGULARITY": left_column.slider("How many times are you active for 90 days", 0, 100, 0),
+    "FREQ_TOP_PACK": left_column.slider("How many times have you been activated to the top pack packages", 0, 1000, 0),
 }
 
 # Call prediction function when a button is clicked
-if st.button("Predict"):
+# Colored predict button
+if st.button("Predict", key="predict_button", help="Click to predict"):
     predict_churn_interface(**input_data)
+#if st.button("Predict"):
+ #   predict_churn_interface(**input_data)
