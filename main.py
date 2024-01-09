@@ -5,11 +5,13 @@ import pandas as pd
 from fastapi import HTTPException
 
 #pipeline = joblib.load('model/xgb.joblib')
-pipeline_1 = joblib.load('model\dt.joblib')
+pipeline_1 = joblib.load('./model/dt.joblib')
+
 
 app = FastAPI(title="Customer Churn Analysis API")
 
 class ChurnFeatures(BaseModel):
+    REGION: str
     TENURE: str
     MONTANT: float
     FREQUENCE_RECH: float
@@ -26,12 +28,16 @@ class ChurnFeatures(BaseModel):
     
 
 # Load your model
-pipeline = joblib.load('model/dt.joblib')
+pipeline_1 = joblib.load('model/dt.joblib')
+
+
 
     # Define the available models
 models = {
     
     "dt": pipeline_1,
+     
+    
     }
 
 
@@ -59,7 +65,7 @@ def predict_churn(
     # Perform prediction using the selected pipeline
     try:
         selected_pipeline = models[selected_model]
-        probabilities = pipeline.predict_proba(df)
+        probabilities = pipeline_1.predict_proba(df)
         probability_score = probabilities[0][1]
     except AttributeError:
         probability_score = None
